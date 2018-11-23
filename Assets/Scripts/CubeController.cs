@@ -12,23 +12,25 @@ public class CubeController : MonoBehaviour
     static float sumAngle = .0f;
 
     // Facing the aim face, counter-clockwisely list other face blocks
-    static int[] upFaceAdjMvIdx = { 8, 7, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    static int[] upFaceAdjRstIdx = { 6, 6, 6, 0, 1, 2, 0, 1, 2, 0, 1, 2 };
-    static int[] leftFaceAdjMvIdx = { 6, 3, 0, 6, 3, 0, 6, 3, 0, 6, 3, 0 };
-    static int[] leftFaceAdjRstIdx = { 4, 2, 0, 4, 2, 0, 4, 2, 0, 4, 2, 0 };
-    static int[] frontFaceAdjMvIdx = { 8, 7, 6, 2, 4, 6, 0, 0, 0, 6, 3, 0 };
-    static int[] frontFaceAdjRstIdx = { 6, 6, 6, 2, 5, 8, 0, 1, 2, 4, 2, 0 };
-    static int[] rightFaceAdjMvIdx = { 2, 4, 6, 2, 4, 6, 2, 4, 6, 2, 4, 6 };
-    static int[] rightFaceAdjRstIdx = { 2, 5, 8, 2, 5, 8, 2, 5, 8, 2, 5, 8 };
-    static int[] backFaceAdjMvIdx = { 0, 0, 0, 2, 4, 6, 8, 7, 6, 6, 3, 0 };
-    static int[] backFaceAdjRstIdx = { 0, 1, 2, 2, 5, 8, 6, 6, 6, 4, 2, 0 };
-    static int[] downFaceAdjMvIdx = { 8, 7, 6, 8, 7, 6, 0, 0, 0, 8, 7, 6 };
-    static int[] downFaceAdjRstIdx = { 6, 6, 6, 6, 6, 6, 0, 1, 2, 6, 6, 6 };
+    // up, left, front, right, back, down
+    static int[,] adjFaceMvIdx = {{ 8, 7, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+                                  { 6, 3, 0, 6, 3, 0, 6, 3, 0, 6, 3, 0 },
+                                  { 8, 7, 6, 2, 4, 6, 0, 0, 0, 6, 3, 0 },
+                                  { 2, 4, 6, 2, 4, 6, 2, 4, 6, 2, 4, 6 },
+                                  { 0, 0, 0, 2, 4, 6, 8, 7, 6, 6, 3, 0 },
+                                  { 8, 7, 6, 8, 7, 6, 0, 0, 0, 8, 7, 6 }};
+    static int[,] adjFaceRstIdx = {{ 6, 6, 6, 0, 1, 2, 0, 1, 2, 0, 1, 2 },
+                                   { 4, 2, 0, 4, 2, 0, 4, 2, 0, 4, 2, 0 },
+                                   { 6, 6, 6, 2, 5, 8, 0, 1, 2, 4, 2, 0 },
+                                   { 2, 5, 8, 2, 5, 8, 2, 5, 8, 2, 5, 8 },
+                                   { 0, 1, 2, 2, 5, 8, 6, 6, 6, 4, 2, 0 },
+                                   { 6, 6, 6, 6, 6, 6, 0, 1, 2, 6, 6, 6 }};
+    //static int[,] crtSolidCubeIdx = {{}}
 
     static GameObject rubikCube;
     static GameObject currentTurn;
     static Transform upFace, leftFace, frontFace, rightFace, backFace, downFace;
-    //static Transform[] solidCubes=new Transform[27];
+    static Transform[] solidCubes=new Transform[27];
 
     void Start()
     {
@@ -40,9 +42,9 @@ public class CubeController : MonoBehaviour
         backFace = rubikCube.transform.Find("Back Faces");
         downFace = rubikCube.transform.Find("Down Faces");
 
-        //Transform smallCubes = rubikCube.transform.Find("SmallCubes");
-        //for (int i = 0; i < 27;i++)
-        //    solidCubes[i] = smallCubes.GetChild(i);
+        Transform smallCubes = rubikCube.transform.Find("SmallCubes");
+        for (int i = 0; i < 27;i++)
+            solidCubes[i] = smallCubes.GetChild(i);
     }
 
     static bool isTurnReady(float degree)
@@ -61,16 +63,16 @@ public class CubeController : MonoBehaviour
     }
 
     // Facing the aim face, counter-clockwisely list other face blocks
-    static void setAdjBlocks(Transform f1, Transform f2, Transform f3, Transform f4, int[] mvIdx)
+    static void setAdjBlocks(Transform f1, Transform f2, Transform f3, Transform f4)
     {
         for (int i = 0; i < 3; i++)
-            f1.GetChild(mvIdx[i]).SetParent(currentTurn.transform);
+            f1.GetChild(adjFaceMvIdx[currentTurnName, i]).SetParent(currentTurn.transform);
         for (int i = 3; i < 6; i++)
-            f2.GetChild(mvIdx[i]).SetParent(currentTurn.transform);
+            f2.GetChild(adjFaceMvIdx[currentTurnName, i]).SetParent(currentTurn.transform);
         for (int i = 6; i < 9; i++)
-            f3.GetChild(mvIdx[i]).SetParent(currentTurn.transform);
+            f3.GetChild(adjFaceMvIdx[currentTurnName, i]).SetParent(currentTurn.transform);
         for (int i = 9; i < 12; i++)
-            f4.GetChild(mvIdx[i]).SetParent(currentTurn.transform);
+            f4.GetChild(adjFaceMvIdx[currentTurnName, i]).SetParent(currentTurn.transform);
     }
 
     static void setSolidCubes()
@@ -79,7 +81,7 @@ public class CubeController : MonoBehaviour
     }
 
     // Facing the aim face, counter-clockwisely list other face blocks
-    static void rstAdjBlocks(Transform f1, Transform f2, Transform f3, Transform f4, int[] mvIdx)
+    static void rstAdjBlocks(Transform f1, Transform f2, Transform f3, Transform f4)
     {
         Transform smallBlock;
 
@@ -87,7 +89,19 @@ public class CubeController : MonoBehaviour
         {
             smallBlock = currentTurn.transform.GetChild(0);
 
-            if (turnDegree > 0) //counter-clockwise
+            if (turnDegree > 100)   //180 degrees
+            {
+                if (i < 3)
+                    smallBlock.SetParent(f3);
+                else if (i < 6)
+                    smallBlock.SetParent(f4);
+                else if (i < 9)
+                    smallBlock.SetParent(f1);
+                else
+                    smallBlock.SetParent(f2);
+                smallBlock.SetSiblingIndex(adjFaceRstIdx[currentTurnName, (i + 6) % 12]);
+            }
+            else if (turnDegree > 0) //counter-clockwise
             {
                 if (i < 3)
                     smallBlock.SetParent(f2);
@@ -97,7 +111,7 @@ public class CubeController : MonoBehaviour
                     smallBlock.SetParent(f4);
                 else
                     smallBlock.SetParent(f1);
-                smallBlock.SetSiblingIndex(mvIdx[(i + 3) % 12]);
+                smallBlock.SetSiblingIndex(adjFaceRstIdx[currentTurnName,(i + 3) % 12]);
             }
             else //clockwise
             {
@@ -109,7 +123,7 @@ public class CubeController : MonoBehaviour
                     smallBlock.SetParent(f2);
                 else
                     smallBlock.SetParent(f3);
-                smallBlock.SetSiblingIndex(mvIdx[(i + 9) % 12]);
+                smallBlock.SetSiblingIndex(adjFaceRstIdx[currentTurnName,(i + 9) % 12]);
             }
         }//end for i=1:12
     }
@@ -119,7 +133,13 @@ public class CubeController : MonoBehaviour
         int[] ccwFaceRstIdx = { 2, 5, 8, 4, 6, 8 };
         int[] cwFaceRstIdx = { 6, 4, 2, 7, 6, 5, 8, 8 };
 
-        if(turnDegree>0)    //counter-clockwise
+        if (turnDegree > 100)    //180
+            for (int i = 0; i < 8; i++)
+            {
+                Transform smallBlock = crtFace.GetChild(8);
+                smallBlock.SetSiblingIndex(i);
+            }
+        else if(turnDegree>0)    //counter-clockwise
             for (int i = 0; i < 6; i++)
             {
                 Transform smallBlock = crtFace.GetChild(ccwFaceRstIdx[i]);
@@ -152,7 +172,7 @@ public class CubeController : MonoBehaviour
 
         currentTurnName = 0;
         upFace.SetParent(currentTurn.transform);
-        setAdjBlocks(backFace, leftFace, frontFace, rightFace, upFaceAdjMvIdx);
+        setAdjBlocks(backFace, leftFace, frontFace, rightFace);
     }
 
     public static void turnLeftFace(float degree)
@@ -162,7 +182,7 @@ public class CubeController : MonoBehaviour
 
         currentTurnName = 1;
         leftFace.SetParent(currentTurn.transform);
-        setAdjBlocks(upFace, backFace, downFace, frontFace, leftFaceAdjMvIdx);
+        setAdjBlocks(upFace, backFace, downFace, frontFace);
     }
 
     public static void turnFrontFace(float degree)
@@ -172,7 +192,7 @@ public class CubeController : MonoBehaviour
 
         currentTurnName = 2;
         frontFace.SetParent(currentTurn.transform);
-        setAdjBlocks(upFace, leftFace, downFace, rightFace, frontFaceAdjMvIdx);
+        setAdjBlocks(upFace, leftFace, downFace, rightFace);
     }
 
     public static void turnRightFace(float degree)
@@ -182,7 +202,7 @@ public class CubeController : MonoBehaviour
 
         currentTurnName = 3;
         rightFace.SetParent(currentTurn.transform);
-        setAdjBlocks(upFace, frontFace, downFace, backFace, rightFaceAdjMvIdx);
+        setAdjBlocks(upFace, frontFace, downFace, backFace);
     }
 
     public static void turnBackFace(float degree)
@@ -192,7 +212,7 @@ public class CubeController : MonoBehaviour
 
         currentTurnName = 4;
         backFace.SetParent(currentTurn.transform);
-        setAdjBlocks(upFace, rightFace, downFace, leftFace, backFaceAdjMvIdx);
+        setAdjBlocks(upFace, rightFace, downFace, leftFace);
     }
 
     public static void turnDownFace(float degree)
@@ -202,7 +222,7 @@ public class CubeController : MonoBehaviour
 
         currentTurnName = 5;
         downFace.SetParent(currentTurn.transform);
-        setAdjBlocks(frontFace, leftFace, backFace, rightFace, downFaceAdjMvIdx);
+        setAdjBlocks(frontFace, leftFace, backFace, rightFace);
     }
 
     void Update()
@@ -252,27 +272,27 @@ public class CubeController : MonoBehaviour
             {
                 case 0:
                     rstCurrentFace(upFace);
-                    rstAdjBlocks(backFace, leftFace, frontFace, rightFace, upFaceAdjRstIdx);
+                    rstAdjBlocks(backFace, leftFace, frontFace, rightFace);
                     break;
                 case 1:
                     rstCurrentFace(leftFace);
-                    rstAdjBlocks(upFace, backFace, downFace, frontFace, leftFaceAdjRstIdx);
+                    rstAdjBlocks(upFace, backFace, downFace, frontFace);
                     break;
                 case 2:
                     rstCurrentFace(frontFace);
-                    rstAdjBlocks(upFace, leftFace, downFace, rightFace, frontFaceAdjRstIdx);
+                    rstAdjBlocks(upFace, leftFace, downFace, rightFace);
                     break;
                 case 3:
                     rstCurrentFace(rightFace);
-                    rstAdjBlocks(upFace, frontFace, downFace, backFace, rightFaceAdjRstIdx);
+                    rstAdjBlocks(upFace, frontFace, downFace, backFace);
                     break;
                 case 4:
                     rstCurrentFace(backFace);
-                    rstAdjBlocks(upFace, rightFace, downFace, leftFace, backFaceAdjRstIdx);
+                    rstAdjBlocks(upFace, rightFace, downFace, leftFace);
                     break;
                 case 5:
                     rstCurrentFace(downFace);
-                    rstAdjBlocks(frontFace, leftFace, backFace, rightFace, downFaceAdjRstIdx);
+                    rstAdjBlocks(frontFace, leftFace, backFace, rightFace);
                     break;
             }//end switch currentTurnName
 
