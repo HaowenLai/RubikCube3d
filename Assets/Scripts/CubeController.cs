@@ -9,13 +9,13 @@ public class CubeController : MonoBehaviour
     static bool turnFinishFlag = true;
     static int currentTurnName;
     static float turnDegree = .0f;
-    static float angle = .0f;
+    static float sumAngle = .0f;
 
     // Facing the aim face, counter-clockwisely list other face blocks
-    static int[] upFaceAdjMvIdx = { 6, 6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    static int[] upFaceAdjRstIdx = { 6, 7, 8, 0, 1, 2, 0, 1, 2, 0, 1, 2 };
-    static int[] frontFaceAdjMvIdx = { 6, 6, 6, 2, 4, 6, 0, 0, 0, 0, 2, 4 };
-    static int[] frontFaceAdjRstIdx = { 6, 7, 8, 2, 5, 8, 0, 1, 2, 0, 3, 6 };
+    static int[] upFaceAdjMvIdx = { 8, 7, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    static int[] upFaceAdjRstIdx = { 6, 6, 6, 0, 1, 2, 0, 1, 2, 0, 1, 2 };
+    static int[] frontFaceAdjMvIdx = { 8, 7, 6, 2, 4, 6, 0, 0, 0, 6, 3, 0 };
+    static int[] frontFaceAdjRstIdx = { 6, 6, 6, 2, 5, 8, 0, 1, 2, 4, 2, 0 };
 
     static GameObject rubikCube;
     static GameObject currentTurn;
@@ -64,21 +64,58 @@ public class CubeController : MonoBehaviour
     static void rstAdjBlocks(Transform f1, Transform f2, Transform f3, Transform f4, int[] mvIdx)
     {
         Transform smallBlock;
+
         for (int i = 0; i < 12; i++)
         {
             smallBlock = currentTurn.transform.GetChild(0);
 
-            if (i < 3)
-                smallBlock.SetParent(f2);
-            else if (i < 6)
-                smallBlock.SetParent(f3);
-            else if (i < 9)
-                smallBlock.SetParent(f4);
-            else
-                smallBlock.SetParent(f1);
+            if (turnDegree > 0) //counter-clockwise
+            {
+                if (i < 3)
+                    smallBlock.SetParent(f2);
+                else if (i < 6)
+                    smallBlock.SetParent(f3);
+                else if (i < 9)
+                    smallBlock.SetParent(f4);
+                else
+                    smallBlock.SetParent(f1);
+                smallBlock.SetSiblingIndex(mvIdx[(i + 3) % 12]);
+            }
+            else //clockwise
+            {
+                if (i < 3)
+                    smallBlock.SetParent(f4);
+                else if (i < 6)
+                    smallBlock.SetParent(f1);
+                else if (i < 9)
+                    smallBlock.SetParent(f2);
+                else
+                    smallBlock.SetParent(f3);
+                smallBlock.SetSiblingIndex(mvIdx[(i + 9) % 12]);
+            }
+        }//end for i=1:12
+    }
 
-            smallBlock.SetSiblingIndex(mvIdx[(i + 3) % 12]);
-        }
+    static void rstCurrentFace(Transform crtFace)
+    {
+        int[] ccwFaceRstIdx = { 2, 5, 8, 4, 6, 8 };
+        int[] cwFaceRstIdx = { 6, 4, 2, 7, 6, 5, 8, 8 };
+
+        if(turnDegree>0)    //counter-clockwise
+            for (int i = 0; i < 6; i++)
+            {
+                Transform smallBlock = crtFace.GetChild(ccwFaceRstIdx[i]);
+                smallBlock.SetSiblingIndex(i);
+            }
+        else    //clockwise
+            for (int i = 0; i < 8; i++)
+            {
+                Transform smallBlock = crtFace.GetChild(cwFaceRstIdx[i]);
+                smallBlock.SetSiblingIndex(i);
+            }
+
+        crtFace.SetParent(rubikCube.transform);
+
     }
 
     static void execTurn(Vector3 orient, float counterClk, float clk)
@@ -115,16 +152,16 @@ public class CubeController : MonoBehaviour
         if (turnFinishFlag)
             return;
 
-        if (angle < Mathf.Abs(turnDegree)) //turn
+        if (sumAngle < Mathf.Abs(turnDegree)) //turn
         {
             //calculate turn degrees
             float delta = speed * Time.deltaTime;
-            if (angle + delta < Mathf.Abs(turnDegree))
-                angle += delta;
+            if (sumAngle + delta < Mathf.Abs(turnDegree))
+                sumAngle += delta;
             else
             {
-                delta = Mathf.Abs(turnDegree) - angle;
-                angle = Mathf.Abs(turnDegree);
+                delta = Mathf.Abs(turnDegree) - sumAngle;
+                sumAngle = Mathf.Abs(turnDegree);
             }
 
             //judge turn method
@@ -144,16 +181,16 @@ public class CubeController : MonoBehaviour
             switch (currentTurnName)
             {
                 case 0:
-                    upFace.SetParent(rubikCube.transform);
+                    rstCurrentFace(upFace);
                     rstAdjBlocks(backFace, leftFace, frontFace, rightFace, upFaceAdjRstIdx);
                     break;
                 case 2:
-                    frontFace.SetParent(rubikCube.transform);
+                    rstCurrentFace(frontFace);
                     rstAdjBlocks(upFace, leftFace, downFace, rightFace, frontFaceAdjRstIdx);
                     break;
             }//end switch currentTurnName
 
-            angle = .0f;
+            sumAngle = .0f;
             turnFinishFlag = true;
             GameObject.Destroy(currentTurn);
         }//end if angle<abs(turnDegree)
