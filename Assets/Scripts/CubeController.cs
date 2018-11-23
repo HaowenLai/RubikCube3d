@@ -25,11 +25,17 @@ public class CubeController : MonoBehaviour
                                    { 2, 5, 8, 2, 5, 8, 2, 5, 8, 2, 5, 8 },
                                    { 0, 1, 2, 2, 5, 8, 6, 6, 6, 4, 2, 0 },
                                    { 6, 6, 6, 6, 6, 6, 0, 1, 2, 6, 6, 6 }};
-    //static int[,] crtSolidCubeIdx = {{}}
+    static int[,] crtSolidCubeIdx = {{2,1,0,3,6,7,8,5},
+                                     {6,3,0,9,18,21,24,15},
+                                     {8,7,6,15,24,25,26,17},
+                                     {2,5,8,17,26,23,20,11},
+                                     {0,1,2,11,20,19,18,9},
+                                     {26,25,24,21,18,19,20,23}};
 
     static GameObject rubikCube;
     static GameObject currentTurn;
     static Transform upFace, leftFace, frontFace, rightFace, backFace, downFace;
+    static Transform smallCubes;
     static Transform[] solidCubes=new Transform[27];
 
     void Start()
@@ -42,7 +48,7 @@ public class CubeController : MonoBehaviour
         backFace = rubikCube.transform.Find("Back Faces");
         downFace = rubikCube.transform.Find("Down Faces");
 
-        Transform smallCubes = rubikCube.transform.Find("SmallCubes");
+        smallCubes = rubikCube.transform.Find("SmallCubes");
         for (int i = 0; i < 27;i++)
             solidCubes[i] = smallCubes.GetChild(i);
     }
@@ -75,9 +81,11 @@ public class CubeController : MonoBehaviour
             f4.GetChild(adjFaceMvIdx[currentTurnName, i]).SetParent(currentTurn.transform);
     }
 
+    // Facing the aim face, counter-clockwisely list other face blocks
     static void setSolidCubes()
     {
-        
+        for (int i = 0; i < 8; i++)
+            solidCubes[crtSolidCubeIdx[currentTurnName, i]].SetParent(currentTurn.transform);
     }
 
     // Facing the aim face, counter-clockwisely list other face blocks
@@ -156,6 +164,50 @@ public class CubeController : MonoBehaviour
 
     }
 
+    static void rstSolidCube()
+    {
+        int[] c180 = { 4, 0, 1, 5, 2, 6, 3, 7 };
+        int[] ccw = { 0, 6, 4, 2, 1, 7, 5, 3 };
+        int[] cw = { 0, 2, 4, 6, 1, 3, 5, 7 };
+
+        Transform temp;
+        Transform temp1;
+        if(turnDegree>100) //180 degrees
+            for (int i = 0; i < 8; i += 2)
+            {
+                temp = solidCubes[crtSolidCubeIdx[currentTurnName, c180[i]]];
+                solidCubes[crtSolidCubeIdx[currentTurnName, c180[i]]] = solidCubes[crtSolidCubeIdx[currentTurnName, c180[i+1]]];
+                solidCubes[crtSolidCubeIdx[currentTurnName, c180[i+1]]] = temp;
+            }
+        else if(turnDegree>0) //counter-clockwise
+        {
+            temp = solidCubes[crtSolidCubeIdx[currentTurnName, 0]];
+            temp1 = solidCubes[crtSolidCubeIdx[currentTurnName, 1]];
+            for (int i = 0; i < 3;i++ )
+            {
+                solidCubes[crtSolidCubeIdx[currentTurnName, ccw[i]]] = solidCubes[crtSolidCubeIdx[currentTurnName, ccw[i + 1]]];
+                solidCubes[crtSolidCubeIdx[currentTurnName, ccw[i + 4]]] = solidCubes[crtSolidCubeIdx[currentTurnName, ccw[i + 5]]];
+            }
+            solidCubes[crtSolidCubeIdx[currentTurnName, 2]] = temp;
+            solidCubes[crtSolidCubeIdx[currentTurnName, 3]] = temp1;
+        }
+        else    //clockwise
+        {
+            temp = solidCubes[crtSolidCubeIdx[currentTurnName, 0]];
+            temp1 = solidCubes[crtSolidCubeIdx[currentTurnName, 1]];
+            for (int i = 0; i < 3;i++ )
+            {
+                solidCubes[crtSolidCubeIdx[currentTurnName, cw[i]]] = solidCubes[crtSolidCubeIdx[currentTurnName, cw[i + 1]]];
+                solidCubes[crtSolidCubeIdx[currentTurnName, cw[i + 4]]] = solidCubes[crtSolidCubeIdx[currentTurnName, cw[i + 5]]];
+            }
+            solidCubes[crtSolidCubeIdx[currentTurnName, 6]] = temp;
+            solidCubes[crtSolidCubeIdx[currentTurnName, 7]] = temp1;
+        }
+
+        for (int i = 0; i < 8;i++ )
+            currentTurn.transform.GetChild(0).SetParent(smallCubes);
+    }
+
     static void execTurn(Vector3 orient, float counterClk, float clk)
     {
         if (turnDegree > 0)
@@ -173,6 +225,7 @@ public class CubeController : MonoBehaviour
         currentTurnName = 0;
         upFace.SetParent(currentTurn.transform);
         setAdjBlocks(backFace, leftFace, frontFace, rightFace);
+        setSolidCubes();
     }
 
     public static void turnLeftFace(float degree)
@@ -183,6 +236,7 @@ public class CubeController : MonoBehaviour
         currentTurnName = 1;
         leftFace.SetParent(currentTurn.transform);
         setAdjBlocks(upFace, backFace, downFace, frontFace);
+        setSolidCubes();
     }
 
     public static void turnFrontFace(float degree)
@@ -193,6 +247,7 @@ public class CubeController : MonoBehaviour
         currentTurnName = 2;
         frontFace.SetParent(currentTurn.transform);
         setAdjBlocks(upFace, leftFace, downFace, rightFace);
+        setSolidCubes();
     }
 
     public static void turnRightFace(float degree)
@@ -203,6 +258,7 @@ public class CubeController : MonoBehaviour
         currentTurnName = 3;
         rightFace.SetParent(currentTurn.transform);
         setAdjBlocks(upFace, frontFace, downFace, backFace);
+        setSolidCubes();
     }
 
     public static void turnBackFace(float degree)
@@ -213,6 +269,7 @@ public class CubeController : MonoBehaviour
         currentTurnName = 4;
         backFace.SetParent(currentTurn.transform);
         setAdjBlocks(upFace, rightFace, downFace, leftFace);
+        setSolidCubes();
     }
 
     public static void turnDownFace(float degree)
@@ -223,6 +280,7 @@ public class CubeController : MonoBehaviour
         currentTurnName = 5;
         downFace.SetParent(currentTurn.transform);
         setAdjBlocks(frontFace, leftFace, backFace, rightFace);
+        setSolidCubes();
     }
 
     void Update()
@@ -298,6 +356,7 @@ public class CubeController : MonoBehaviour
 
             sumAngle = .0f;
             turnFinishFlag = true;
+            rstSolidCube();
             GameObject.Destroy(currentTurn);
         }//end if angle<abs(turnDegree)
     }
